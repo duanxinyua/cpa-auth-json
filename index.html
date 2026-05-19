@@ -524,7 +524,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" id="outputPanel">
         <div class="panel-head">
           <div>
             <div class="panel-title">输出</div>
@@ -596,6 +596,7 @@
 
     const el = {
       inputPanel: document.getElementById('inputPanel'),
+      outputPanel: document.getElementById('outputPanel'),
       sessionInput: document.getElementById('sessionInput'),
       fileInput: document.getElementById('fileInput'),
       pickFiles: document.getElementById('pickFiles'),
@@ -1146,18 +1147,40 @@
       }
 
       const minHeight = window.matchMedia('(max-width: 920px)').matches ? 360 : 450;
-      const nextHeight = Math.max(
+      const baseHeight = Math.max(
         minHeight,
         ...textareas.map((item) => item.scrollHeight),
       );
 
       for (const item of textareas) {
-        item.style.height = `${nextHeight}px`;
+        item.style.height = `${baseHeight}px`;
+      }
+
+      if (window.matchMedia('(max-width: 920px)').matches) {
+        return;
+      }
+
+      const inputHeight = el.inputPanel.getBoundingClientRect().height;
+      const outputHeight = el.outputPanel.getBoundingClientRect().height;
+      const delta = Math.round(inputHeight - outputHeight);
+
+      if (Math.abs(delta) < 2) {
+        return;
+      }
+
+      if (delta > 0) {
+        el.output.style.height = `${baseHeight + delta}px`;
+      } else {
+        el.sessionInput.style.height = `${baseHeight + Math.abs(delta)}px`;
       }
     }
 
     function syncTextareaHeightsSoon() {
-      window.requestAnimationFrame(syncTextareaHeights);
+      const frame = window.requestAnimationFrame || ((callback) => window.setTimeout(callback, 0));
+      frame(() => {
+        syncTextareaHeights();
+        frame(syncTextareaHeights);
+      });
     }
 
     function convertFromText(text) {
