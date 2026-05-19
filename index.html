@@ -1139,6 +1139,27 @@
       el.outputStatus.className = `pill ${tone}`.trim();
     }
 
+    function syncTextareaHeights() {
+      const textareas = [el.sessionInput, el.output];
+      for (const item of textareas) {
+        item.style.height = 'auto';
+      }
+
+      const minHeight = window.matchMedia('(max-width: 920px)').matches ? 360 : 450;
+      const nextHeight = Math.max(
+        minHeight,
+        ...textareas.map((item) => item.scrollHeight),
+      );
+
+      for (const item of textareas) {
+        item.style.height = `${nextHeight}px`;
+      }
+    }
+
+    function syncTextareaHeightsSoon() {
+      window.requestAnimationFrame(syncTextareaHeights);
+    }
+
     function convertFromText(text) {
       const sources = parseInputDocuments(text);
       const converted = [];
@@ -1221,6 +1242,7 @@
         el.copyOutput.disabled = true;
         el.downloadOutput.disabled = true;
         setPill(state.skipped.length ? '失败' : '未生成', state.skipped.length ? 'bad' : '');
+        syncTextareaHeightsSoon();
         return;
       }
 
@@ -1231,6 +1253,7 @@
       el.downloadOutput.disabled = false;
       const issueCount = Number(el.statIssues.textContent || 0);
       setPill(issueCount ? '已生成，有提示' : '可用', issueCount ? 'warn' : 'ok');
+      syncTextareaHeightsSoon();
     }
 
     function runConvert() {
@@ -1340,6 +1363,7 @@
     });
 
     el.sessionInput.addEventListener('input', scheduleConvert);
+    el.sessionInput.addEventListener('input', syncTextareaHeightsSoon);
     el.convertInput.addEventListener('click', runConvert);
     el.pickFiles.addEventListener('click', () => el.fileInput.click());
     el.fileInput.addEventListener('change', () => readFiles(el.fileInput.files));
@@ -1393,6 +1417,7 @@
       }
     });
 
+    window.addEventListener('resize', syncTextareaHeightsSoon);
     updateOutput();
   </script>
 </body>
